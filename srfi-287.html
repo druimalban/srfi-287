@@ -61,7 +61,7 @@ SPDX-License-Identifier: MIT
 
 <p>Graphs are ubiquitous in programming, but are difficult to implement efficiently. Martin Erwig&rsquo;s functional graph libary design <a href="#erwig2001">[1]</a>, dating from around 2000, has found currency in the Haskell community <a href="#hs-fgl">[2]</a>. Persistent graphs are also included with <code>ocamlgraph</code> <a href="#ocamlgraph">[4]</a>, the original FGL also targets Standard ML, and there is a recent port of FGL to Gleam <a href="#gleam-graph">[5]</a>. Current implementations are mature, are distinguished by a rich set of graph operations, and are supported by availability of appropriate data structures in recent years such as integer mappings. However, there has been no graph proposal so far for Scheme, despite widespread applicability in modern compiler techniques, and for productivity in working with Scheme day-to-day. Graphs are frequently an elegant solution.</p>
 
-<h2 id="persistent-interface">Graph presentation</h2>
+<h2 id="graph-presentation">Graph presentation</h2>
 <p>The graphs described here are directed multigraphs. Nodes are indexed by non-negative integers, as in the original FGL/ML design <a href="#sml-fgl">[3]</a>, and in FGL/Haskell which gives an efficient implementation based on big-endian Patricia trees (precisely the integer mappings in SRFI 224 <a href="#srfi-224">[7]</a>). Representing undirected graphs is possible by adding two edges in opposite directions for every undirected edge.</p>
 <p>In the design presented here, there may be more than one edge from a given source node to a given target node, providing that they are distinguished by label, but there cannot be more than one edge between the same incident nodes with the same label.</p>
 <p>Apart from <i>indexing</i> nodes by non-negative integers, there is no restriction on the datatypes for node and edge labels, and it is possible for these to be disjoint. When constructing a graph, SRFI 128 <a href="#srfi-128">[6]</a> comparators for the node and edge labels respectively are required.</p>
@@ -104,7 +104,7 @@ SPDX-License-Identifier: MIT
   <dd><code><a href="#graph?">graph?</a></code>
     <code><a href="#graph-empty?">graph-empty?</a></code>
     <code><a href="#graph-contains?">graph-contains?</a></code>
-    <code><a href="#graph-containts-edge?">graph-contains-edge?</a></code></dd>
+    <code><a href="#graph-contains-edge?">graph-contains-edge?</a></code></dd>
 
   <dt>Operations</dt>
   <dd><code><a href="#graph-order">graph-order</a></code>
