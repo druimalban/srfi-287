@@ -6,17 +6,17 @@ SPDX-License-Identifier: MIT
 -->
 <head>
   <meta charset="utf-8">
-  <title>SRFI XXX: Graphs</title>
+  <title>SRFI 287: Graphs</title>
   <link href="/favicon.png" rel="icon" sizes="192x192" type="image/png">
   <link rel="stylesheet" href="https://srfi.schemers.org/srfi.css" type="text/css">
   <link rel="stylesheet" href="srfi-275.css" type="text/css">
   <meta name="viewport" content="width=device-width, initial-scale=1"></head>
 <body>
-  <h1><a href="https://srfi.schemers.org/"><img class="srfi-logo" src="https://srfi.schemers.org/srfi-logo.svg" alt="SRFI surfboard logo"></a>XXX: Graphs</h1>
+  <h1><a href="https://srfi.schemers.org/"><img class="srfi-logo" src="https://srfi.schemers.org/srfi-logo.svg" alt="SRFI surfboard logo"></a>287: Graphs</h1>
   <p class="nonbody">by Duncan Guthrie</p>
 <h2 id="status">Status</h2>
 
-<p>This SRFI is currently in <em>draft</em> status.  Here is <a href="https://srfi.schemers.org/srfi-process.html">an explanation</a> of each status that a SRFI can hold.  To provide input on this SRFI, please send email to <a href="mailto:srfi+minus+XXX+at+srfi+dotschemers+dot+org"><code>srfi-XXX@<span class="antispam">nospam</span>srfi.schemers.org</code></a>.  To subscribe to the list, follow <a href="https://srfi.schemers.org/srfi-list-subscribe.html">these instructions</a>.  You can access previous messages via the mailing list <a href="https://srfi-email.schemers.org/srfi-275/">archive</a>.</p>
+<p>This SRFI is currently in <em>draft</em> status.  Here is <a href="https://srfi.schemers.org/srfi-process.html">an explanation</a> of each status that a SRFI can hold.  To provide input on this SRFI, please send email to <a href="mailto:srfi+minus+287+at+srfi+dotschemers+dot+org"><code>srfi-287@<span class="antispam">nospam</span>srfi.schemers.org</code></a>.  To subscribe to the list, follow <a href="https://srfi.schemers.org/srfi-list-subscribe.html">these instructions</a>.  You can access previous messages via the mailing list <a href="https://srfi-email.schemers.org/srfi-275/">archive</a>.</p>
 <ul class="nonbody">
   <li>Received: 2026-10-XX</li>
   <li>60-day deadline: 2026-12-XX</li>
@@ -89,7 +89,7 @@ SPDX-License-Identifier: MIT
 <h2 id="notation-and-convention">Notation and convention</h2>
 
 <p>Graph objects are printed in examples as <code>#&lt;graph&gt;</code>. Node contexts are printed in examples as <code>#&lt;node-context predecessors index label successors&gt;</code>. The order of arguments reflects the convention in FGL/ML and FGL/Haskell and makes it easier to distinguish a list of incoming pairs from a list of outgoing pairs than locating predecessors and successors last.</p>
-<p>The name of the library is simply <code>graph</code>. A single library is exported: <code>(srfi :XXX graph)</code> and the alias <code>(srfi :XXX)</code>, which exports the same procedures.</p>
+<p>The name of the library is simply <code>graph</code>. A single library is exported: <code>(srfi :287 graph)</code> and the alias <code>(srfi :287)</code>, which exports the same procedures.</p>
 
 <h2 id="procedure-index">Index of exported procedures and variables</h2>
 
@@ -157,7 +157,7 @@ SPDX-License-Identifier: MIT
 <h3 id="constructors">Constructors</h3>
 
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#empty-graph" id="empty-graph">empty-graph</a> <var>nlab-comp</var> <var>elab-comp</var>)</code>
 </div>
 <p>Construct the empty graph using comparators for the node and edge labels respectively. An assertion violation is raised with <var>nlab-comp</var> or  <var>elab-comp</var> respectively as irritant if it is not a SRFI 128 comparator. Examples:</p>
@@ -171,7 +171,7 @@ SPDX-License-Identifier: MIT
 </pre>
 
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#build-graph" id="build-graph">build-graph</a> <var>nlab-comp</var> <var>elab-comp</var> <var>context</var> ...)</code>
 </div>
 <p>Construct a graph using comparators for the node and edge labels respectively, followed by any number of node contexts. An assertion violation is raised in the following circumstances:
@@ -212,7 +212,7 @@ SPDX-License-Identifier: MIT
 </pre>
 
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#list-%3Egraph" id="list-%3Egraph">list->graph</a> <var>nlab-comp</var> <var>elab-comp</var> <var>pair</var>)</code>
 </div>
 <p>Construct a graph using comparators for the node and edge labels respectively, followed by a list of node contexts. Error-raising behaviour is consistent with <code>build-graph</code>, as if it was applied to <code>pair</code>. An assertion violation is raised with <var>pair</var> as irritant is not a proper list. Example:</p>
@@ -226,13 +226,13 @@ SPDX-License-Identifier: MIT
 <h3 id="predicates">Predicates</h3>
 
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#graph?" id="graph?">graph?</a> <var>obj</var>)</code>
 </div>
 <p>Returns <code>#t</code> if <var>obj</var> is a graph object. Returns <code>#f</code> otherwise.</p>
 
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#graph-empty?" id="graph-empty?">graph-empty?</a> <var>graph</var>)</code>
 </div>
 <p>Returns <code>#t</code> if <var>graph</var> is empty (no nodes or edges). Returns <code>#f</code> otherwise. Examples:</p>
@@ -248,7 +248,7 @@ SPDX-License-Identifier: MIT
 </pre>
 
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#graph-contains?" id="graph-contains?">graph-contains?</a> <var>graph</var> <var>k</var>)</code><br>
     <code class="signature">(<a href="#graph-contains?" id="graph-contains?">graph-contains?</a> <var>graph</var> <var>k</var> <var>label</var>)</code>
 </div>
@@ -269,7 +269,7 @@ SPDX-License-Identifier: MIT
 </pre>
 
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#graph-contains-edge?" id="graph-contains-edge?">graph-contains-edge?</a> <var>graph</var> <var>src</var> <var>tgt</var>)</code><br>
   <code class="signature">(<a href="#graph-contains-edge?" id="graph-contains-edge?">graph-contains-edge?</a> <var>graph</var> <var>src</var> <var>tgt</var> <var>label</var>)</code>
 </div>
@@ -296,7 +296,7 @@ SPDX-License-Identifier: MIT
 <h3 id="operations">Operations</h3>
 
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#graph-order" id="graph-order">graph-order</a> <var>graph</var>)</code><br>
   <code class="signature">(<a href="#graph-size" id="graph-size">graph-size</a> <var>graph</var>)</code>
 </div>
@@ -326,14 +326,14 @@ SPDX-License-Identifier: MIT
 </pre>
 
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#graph-node-label-comparator" id="graph-node-label-comparator">graph-node-label-comparator</a> <var>graph</var>)</code><br>
   <code class="signature">(<a href="#graph-edge-label-comparator" id="graph-edge-label-comparator">graph-edge-label-comparator</a> <var>graph</var>)</code><br>
 </div>
 <p>Retrieve the respective node and edge label comparators for <var>graph</var> as SRFI 128 comparator objects.</p>
 
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#graph=?" id="graph=?">graph=?</a> <var>graph1</var> <var>graph2</var> <var>graph3</var> &hellip;)</code><br>
 </div>
 <p>Returns <code>#t</code> providing that every graph has the same nodes and edges, and that they are indexed and labelled the same. Further, the node label comparators must be the same, and also the edge label comparators. Returns <code>#f</code> otherwise.</p>
@@ -378,7 +378,7 @@ SPDX-License-Identifier: MIT
 
 <h3 id="composition">Composition</h3>
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#graph-embed" id="graph-embed">graph-embed</a> <var>graph</var> <var>context1</var> <var>context2</var> ...)</code>
 </div>
 <p>Embed node contexts <var>context1</var>, <var>context2</var> and so on into <var>graph</var>. The error-raising behaviour is almost identical to that of <var>build-graph</var> on the level of each context, except in two cases. First, when an invalid source/target node is declared, an assertion violation is raised with irritants the invalid source/target node and <var>graph</var> with all of the work done embedding previous contexts prior to processing the current, invalid context. Similarly, the check that a node or edge label is valid is with respect to <var>graph</var>&rsquo;s node or edge label comparators, and an assertion violation is raised with the label and <var>graph</var> with all of the work done embedding previous contexts.</p>
@@ -432,7 +432,7 @@ SPDX-License-Identifier: MIT
 </pre>
 
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#graph-insert" id="graph-insert">graph-insert</a> <var>graph</var> <var>k1</var> <var>label1</var> <var>k2</var> <var>label2</var> ...)</code>
 </div>
 <p>Insert nodes with index <var>k1</var> and label <var>label1</var>, and so on into <var>graph</var>. An assertion violation is raised with <var>label1</var> and <var>graph</var> if it is not a valid label with respect to <var>graph</var>&rsquo;s node label comparator, and so on. Examples:</p>
@@ -448,7 +448,7 @@ SPDX-License-Identifier: MIT
 </pre>
 
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#graph-insert-edges" id="graph-insert-edges">graph-insert-edges</a> <var>graph</var> <var>src1</var> <var>tgt1</var> <var>label1</var> <var>src2</var> <var>tgt2</var> <var>label2</var> ...)</code>
 </div>
 <p>Insert edges from <var>src1</var> to <var>tgt1</var> with label <var>label1</var> and so on into <var>graph</var>. An assertion violation is raised with <var>src1</var>, <var>tgt1</var> and so on respectively as irritant if they are not a non-negative integer. An assertion violation is raised with  <var>src1</var> and <var>graph</var> as irritants if <var>src1</var> is not already contained within <var>graph</var> or is not a valid index for a graph, and similarly with <var>tgt1</var> and <var>graph</var> as irritants if <var>tgt1</var> is not already contained within <var>graph</var> or is not a valid index for a graph. An assertion violation is raised with <var>label1</var> and <var>graph</var> as irritants if <var>label1</var> is invalid given <var>graph</var>&rsquo;s edge label comparator.</p>
@@ -479,7 +479,7 @@ SPDX-License-Identifier: MIT
 <h3 id="decomposition">Decomposition</h3>
 
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#graph-match" id="graph-match">graph-match</a> <var>graph</var> <var>k</var>)</code>
 </div>
 <p>Decompose a graph into two values: a node context (containing the incoming edges, index, label and outgoing edges for node <var>k</var>) and a graph without node <var>k</var> and any edges incident to <var>k</var>. If <var>k</var> is not contained within <var>graph</var>, then an assertion violation is raised with <var>k</var> and <var>graph</var> as irritants. Examples:</p>
@@ -505,7 +505,7 @@ context
 </pre>
 
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#graph-match-any" id="graph-match-any">graph-match-any</a> <var>graph</var>)</code>
 </div>
 <p>Like <code>graph-match</code>, except that an arbitrary node is selected, providing that <var>graph</var> is non-empty. If <var>graph</var> is empty, then an assertion violation is raised with <var>graph</var> as irritant, because there exists no node to be removed.</p>
@@ -525,7 +525,7 @@ context
 </pre>
 
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#graph-delete" id="graph-delete">graph-delete</a> <var>graph</var> <var>k1</var> <var>k2</var> ...)</code>
 </div>
 <p>Remove the nodes indexed at <var>k1</var>, <var>k2</var> and so on from <var>graph</var>. Similarly to the decompositions above, all edges incident with <var>k1</var>, <var>k2</var> and so on are removed. No error is raised if <var>k1</var> or <var>k2</var> are not contained within <var>graph</var>.</p>
@@ -544,7 +544,7 @@ context
 </pre>
 
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#graph-delete-edges" id="graph-delete-edges">graph-delete-edges</a> <var>graph</var> <var>src1</var> <var>tgt1</var> <var>label1</var> <var>src2</var> <var>tgt2</var> <var>label2</var> ...)</code>
 </div>
 <p>Remove the edges from <var>src1</var> to <var>tgt1</var> with label <var>label1</var>, and so on. An assertion violation is raised with <var>src1</var> or <var>tgt1</var> respectively as irritant if they are not a non-negative integer. An assertion violation is raised with <var>label1</var> and <var>graph</var> as irritants if <var>label1</var> is invalid given <var>graph</var>&rsquo;s edge label comparator. No error is raised if <var>src1</var> or <var>tgt1</var> and so on are not contained within <var>graph</var>.</p>
@@ -571,7 +571,7 @@ context
 </pre>
 
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#graph-delete-all-edges" id="graph-delete-all-edges">graph-delete-all-edges</a> <var>graph</var> <var>src1</var> <var>tgt1</var> <var>src2</var> <var>tgt2</var> ...)</code>
 </div>
 <p>Remove all of the edges from <var>src1</var> to <var>tgt1</var>, and so on. This removes all edges regardless of label. An assertion violation is raised with <var>src1</var> or <var>tgt1</var> respectively as irritant if they are not a non-negative integer. No error is raised if <var>src1</var> or <var>tgt1</var> and so on are not contained within <var>graph</var>. Examples</p>
@@ -598,7 +598,7 @@ context
 <h3 id="inspection">Inspection</h3>
 
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#graph-context" id="graph-context">graph-context</a> <var>graph</var> <var>k</var>)</code>
 </div>
 <p>Like <code>graph-match</code>, except that only a node context is retrieved, which is faster as there is no need to decompose the graph into one in which <var>k</var> and any edges are not present. Error behaviour is identical to <var>graph-match</var>. Examples:</p>
@@ -616,7 +616,7 @@ context
 </pre>
 
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#graph-adjacencies" id="graph-adjacencies">graph-adjacencies</a> <var>graph</var>)</code>
 </div>
 <p>Get a list of adjacencies, which is a list of node contexts consisting only of index, label and outgoing edges (incoming edges are empty). These node contexts can in turn be used to build the same graph. Examples:</p>
@@ -639,7 +639,7 @@ context
 </pre>
 
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#graph-nodes" id="graph-nodes">graph-nodes</a> <var>graph</var>)</code>
 </div>
 <p>Get a list of node indices contained within <var>graph</var>. Examples:</p>
@@ -654,7 +654,7 @@ context
 </pre>
 
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#graph-predecessors" id="graph-predecessors">graph-predecessors</a> <var>graph</var> <var>k</var>)</code>
 </div>
 <p>Get the predecessors of node <var>k</var>, as a list of source node indices.  If <var>k</var> is not contained within <var>graph</var>, then an assertion violation is raised with <var>k</var> and <var>graph</var> as irritants. Examples:</p>
@@ -670,7 +670,7 @@ context
 </pre>
 
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#graph-successors" id="graph-successors">graph-successors</a> <var>graph</var> <var>k</var>)</code>
 </div>
 <p>Get the successors of node <var>k</var> as a list of target node indices.  If <var>k</var> is not contained within <var>graph</var>, then an assertion violation is raised with <var>k</var> and <var>graph</var> as irritants. Examples:</p>
@@ -687,7 +687,7 @@ context
 </pre>
 
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#graph-nodes+labels" id="graph-nodes+labels">graph-nodes+labels</a> <var>graph</var>)</code>
 </div>
 <p>Retrieve the nodes and labels contained within <var>graph</var> as an association list. Examples:</p>
@@ -702,7 +702,7 @@ context
 </pre>
 
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#graph-predecessors+labels" id="graph-predecessors+labels">graph-predecessors+labels</a> <var>graph</var> <var>k</var>)</code>
 </div>
 <p>Get the predecessors of node <var>k</var> as a list of pairs of source node and edge labels.  If <var>k</var> is not contained within <var>graph</var>, then an assertion violation is raised with <var>k</var> and <var>graph</var> as irritants. Examples:</p>
@@ -718,7 +718,7 @@ context
 </pre>
 
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#graph-successors+labels" id="graph-successors+labels">graph-successors+labels</a> <var>graph</var> <var>k</var>)</code>
 </div>
 <p>Get the successors of node <var>k</var> as a list of pairs of target node and edge labels.  If <var>k</var> is not contained within <var>graph</var>, then an assertion violation is raised with <var>k</var> and <var>graph</var> as irritants. Examples:</p>
@@ -734,7 +734,7 @@ context
 </pre>
 
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#graph-indegree" id="graph-indegree">graph-indegree</a> <var>graph</var> <var>k</var>)</code>
 </div>
 <p>Get the indegree of node <var>k</var>, which is a numeric count of the incoming edges. If <var>k</var> is not contained within <var>graph</var>, then an assertion violation is raised with <var>k</var> and <var>graph</var> as irritants. Examples:</p>
@@ -751,7 +751,7 @@ context
 </pre>
 
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#graph-outdegree" id="graph-outdegree">graph-outdegree</a> <var>graph</var> <var>k</var>)</code>
 </div>
 <p>Get the outdegree of node <var>k</var>, which is a numeric count of the outgoing edges. If <var>k</var> is not contained within <var>graph</var>, then an assertion violation is raised with <var>k</var> and <var>graph</var> as irritants. Examples:</p>
@@ -768,7 +768,7 @@ context
 </pre>
 
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#graph-degree" id="graph-degree">graph-degree</a> <var>graph</var> <var>k</var>)</code>
 </div>
 <p>Get the degree of node <var>k</var>, which is a numeric count of both incoming and outgoing edges. If <var>k</var> is not contained within <var>graph</var>, then an assertion violation is raised with <var>k</var> and <var>graph</var> as irritants. Examples:</p>
@@ -786,7 +786,7 @@ context
 
 <h3 id="traversal">Traversal</h3>
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#graph-fold" id="graph-fold">graph-fold</a> <var>procedure</var> <var>obj</var> <var>graph</var></code>
 </div>
 <p>Fold over <var>graph</var>, in an unspecified order. <var>procedure?</var> is applied to two arguments: the current node context, and the accumulator, which begins as <var>obj</var>. In the following example, <code>graph-adjacencies</code> can be defined as follows:</p>
@@ -819,12 +819,12 @@ context
 
 <h3 id="context">Node context</h3>
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#node-context?" id="node-context?">node-context?</a> <var>obj</var>)</code>
 </div>
 <p>Returns <code>#t</code> if <var>obj</var> is a node context. Returns <code>#f</code> otherwise.</p>
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#node-context-incoming" id="node-context-incoming">node-context-incoming</a> <var>context</var>)</code><br>
   <code class="signature">(<a href="#node-context-index" id="node-context-index">node-context-index</a> <var>context</var>)</code><br>
   <code class="signature">(<a href="#node-context-label" id="node-context-label">node-context-label</a> <var>context</var>)</code><br>
@@ -833,7 +833,7 @@ context
 <p></p>
 
 <div class="feature">
-  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#node-context" id="node-context">node-context</a> <var>incoming</var> <var>k</var> <var>label</var> <var>outgoing</var>)</code>
 </div>
 <p>Construct a node context from incoming edges <var>incoming</var>, index <var>k</var>, label <var>label</var> and outgoing edges <var>outgoing</var>. No validation in this low-level constructor is made as there is no way to check that the node or edge labels are invalid in isolation. Instead, the graph constructors and procedures make these checks with respect to their comparators.</p>
