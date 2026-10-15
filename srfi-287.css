@@ -1,0 +1,329 @@
+/*
+SPDX-FileCopyrightText: 2026 Duncan Guthrie
+SPDX-License-Identifier: MIT
+*/
+
+/*
+   Bitstream Charter is licensed as follows: https://mirror.apps.cam.ac.uk/pub/tex-archive/fonts/charter/readme.charter
+
+   These fonts are from the Debian packaging of the Texlive opentype fonts:
+   https://packages.debian.org/sid/texlive-fonts-extra
+
+   The source package was 2026.20260711-2, as retrieved 30 August 2026.
+*/
+@font-face {
+    font-family: "Bitstream Charter";
+    font-style: normal;
+    font-weight: bold;
+    src: local("Charter-Bold"),
+         local("Bitstream Charter-Bold"),
+         url("XCharter-Bold.woff2");
+}
+
+@font-face {
+    font-family: "Bitstream Charter";
+    font-style: italic;
+    font-weight: bold;
+    src: local("Charter-BoldItalic"),
+         local("Bitstream Charter-BoldItalic"),
+         url("XCharter-BoldItalic.woff2");
+}
+
+@font-face {
+    font-family: "Bitstream Charter";
+    font-style: normal;
+    font-weight: normal;
+    src: local("Charter"),
+         local("Bitstream Charter"),
+         url("XCharter-Roman.woff2");
+}
+
+@font-face {
+    font-family: "Bitstream Charter";
+    font-style: italic;
+    font-weight: normal;
+    src: local("Charter-Italic"),
+         local("Bitstream Charter-Italic"),
+         url("XCharter-Italic.woff2");
+}
+
+/*
+   Roboto Mono is licensed under the SIL Open Font License, Version 1.1.
+
+   These fonts were retrieved from the Google Fonts site 30 August 2026.
+*/
+@font-face {
+    font-family: "Roboto Mono";
+    font-style: normal;
+    font-weight: normal;
+    src: url("RobotoMono-Regular.woff2");
+}
+
+@font-face {
+    font-family: "Roboto Mono";
+    font-style: italic;
+    font-weight: normal;
+    src: url("RobotoMono-Italic.woff2");
+}
+
+/*
+   From the r7rs.org CSS:
+
+   """The URW fonts are NOT free software according to the FSF definition;
+      they are distributed under the ‘Aladdin Free Public License’. This
+      is sufficient to allow essentially unrestricted web font use, since
+      we don’t charge for access to the fonts, which is the main
+      restriction this licence imposes.
+
+      <https://spdx.org/licenses/Aladdin.html>"""
+
+   These fonts are base64 encoded from GhostPDL 10.07.1, as retrieved 30 August 2026.
+*/
+@font-face {
+    font-family: "URW Classic Sans";
+    font-style: normal;
+    font-weight: bold;
+    src: url("URWClassicSans-Bold.woff2");
+}
+
+@font-face {
+    font-family: "URW Classic Sans";
+    font-style: italic;
+    font-weight: bold;
+    src: url("URWClassicSans-BoldItalic.woff2");
+}
+
+@font-face {
+    font-family: "URW Classic Sans";
+    font-style: normal;
+    font-weight: normal;
+    src: url("URWClassicSans-Regular.woff2");
+}
+
+@font-face {
+    font-family: "URW Classic Sans";
+    font-style: italic;
+    font-weight: normal;
+    src: url("URWClassicSans-RegularIt.woff2");
+}
+
+/* Dark/light theme and feature/category by procedure/library are
+   from SRFI 276 by Peter McGoron */
+@media (prefers-color-scheme: light) {
+    :root {
+        --background-color: white;
+        --link-color: blue;
+        --text-color: black;
+        --visited-link-color: purple;
+    }
+
+    code {
+        background-color: #f0f0f0;
+    }
+
+    pre {
+        border: 1px solid;
+        padding: 7.5px;
+        background-color: #f0f0f0;
+        margin-bottom: 1.5em;
+        overflow-x: auto;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --background-color: #161616;
+        --link-color: skyblue;
+        --text-color: #e0e0e0;
+        --visited-link-color: orchid;
+    }
+
+    code {
+        background-color: #2b2b2b;
+    }
+
+    pre {
+        border: 1px solid;
+        padding: 7.5px;
+        background-color: #2b2b2b;
+        margin-bottom: 1.5em;
+        overflow-x: auto;
+    }
+}
+
+.feature {
+    overflow: auto;
+    margin-top: 1.5em;
+}
+
+.category {
+    float: right;
+    font-family: 'URW Classic Sans', sans-serif;
+}
+
+a {
+    color: var(--link-color);
+}
+
+a:visited {
+    color: var(--visited-link-color);
+}
+
+body {
+    font-family: 'Bitstream Charter', serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+h1, h2, h3, address {
+    font-family: 'URW Classic Sans', sans-serif;
+}
+
+h4 {
+    font-family: 'URW Classic Sans', sans-serif;
+    font-weight: bold;
+    font-style: italic;
+}
+
+code, tt, pre {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 85%;
+
+    .category & {
+        background-color: var(--background-color);
+    }
+}
+
+p var, li var {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 85%;
+    font-style: italic;
+}
+
+/* Format the index of procedures so that the groupings are consistent with
+   non-body text in the sense of font and spacing above and below.
+
+   Set a 1em space between the actual procedures. */
+dl.procs {
+    & dt {
+        font-family: 'URW Classic Sans', sans-serif;
+        margin-top: 1em;
+        margin-bottom: 0.5em;
+    }
+
+    & dd {
+        margin-top: 0;
+    }
+
+    & dd.fake-group {
+        margin-top: 0.5em;
+    }
+
+    & dd code + code {
+        margin-left: 1em;
+    }
+}
+
+table {
+    font-family: 'URW Classic Sans', sans-serif;
+    font-weight: normal;
+    font-style: normal;
+    border: 1px solid;
+    margin-bottom: 1em;
+}
+
+table.args td {
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+}
+
+dl.test-cases {
+    font-family: 'URW Classic Sans', sans-serif;
+    font-weight: normal;
+    font-style: normal;
+    margin-left: 2em;
+
+    & dt {
+        font-weight: normal;
+        margin-top: 0.75em;
+    }
+
+    & dd {
+        margin-left: 1.5em;
+        margin-bottom: 0;
+        overflow-x: auto;
+
+        & .remark {
+            display: block;
+            margin-top: 0.2em;
+        }
+
+        & .components {
+            display: block;
+            margin-top: 0.2em;
+        }
+    }
+}
+
+.overflow-x {
+    overflow-x: auto;
+}
+
+table.parsing-segments {
+    margin-left: 2em;
+    border-collapse: separate;
+    border-spacing: 0;
+
+    & th, td {
+        padding: 0.2em 0.4em;
+        text-align: left;
+    }
+
+    & th {
+        position: sticky;
+        top: 0;
+        background: var(--background-color);
+        z-index: 1;
+    }
+
+    & tr.case-label {
+        & td {
+            padding-top: 0.5em;
+            font-weight: normal;
+        }
+
+        & div {
+            position: sticky;
+            left: 0;
+            width: max-content;
+            background: var(--background-color);
+        }
+    }
+}
+
+ul#references {
+    list-style-type: none;
+    margin-left: -2em;
+
+    & li {
+        margin-bottom: 0.5em;
+
+        & a {
+            font-family: "URW Classic Sans", sans-serif;
+            font-weight: bold;
+
+            & code {
+                font-weight: normal;
+            }
+        }
+    }
+}
+
+.nonbody, #toc + ul, ol#turtle-cases {
+    font-family: 'URW Classic Sans', sans-serif;
+    font-weight: normal;
+    font-style: normal;
+}
+ol#turtle-cases {
+    list-style-type: none;
+}
