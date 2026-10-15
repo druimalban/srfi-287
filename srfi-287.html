@@ -54,7 +54,7 @@ SPDX-License-Identifier: MIT
   <li><a href="#implementation">Implementation</a></li>
   <li><a href="#bibliography">References</a></li>
   <li><a href="#acknowledgements">Acknowledgements</a></li>
-  <li><a href="#copyright">Copyright</a></li></li>
+  <li><a href="#copyright">Copyright</a></li>
 </ul>
 
 <h2 id="rationale">Rationale</h2>
@@ -144,7 +144,7 @@ SPDX-License-Identifier: MIT
 
 <dt>Node context</dt>
 <dd><code><a href="#node-context">node-context</a></code>
-  <code><a href="#node-context?">node-context?</a></code></br>
+  <code><a href="#node-context?">node-context?</a></code><br>
 <dd><code><a href="#node-context-incoming">node-context-incoming</a></code>
   <code><a href="#node-context-index">node-context-index</a></code>
   <code><a href="#node-context-label">node-context-label</a></code>
@@ -192,7 +192,6 @@ SPDX-License-Identifier: MIT
         </li>
       </ol>
   </ol>
-</p>
 <p>Notably, unlike <code>graph-embed</code>, the order of the contexts does not matter, in that incoming and outgoing edge pairs can refer to source or target nodes regardless of the associated context's position within the list of contexts. The other major difference from <code>graph-embed</code> is that in the case of duplicate node contexts (same index), the first context is preferred, and subsequent contexts are ignored.</p>
 <p>In the following example, the same graph is built twice. This graph has nodes indexed at 0, 1 and 2, those nodes labelled &ldquo;zero&rdquo;, &ldquo;one&rdquo;, and &ldquo;two&rdquo;, and then an edge from node 0 to node 1, an edge from node 1 to node 2, and two edges from node 2 back to node 0. In the first case, this is built only by specifying outgoing edges. In the second example, the edge from node 0 to node 1 is added as an incoming edge to node 1, and so too the edge from node 1 to node 2 is added as an incoming edge to node 2.</p>
 <pre>
@@ -250,7 +249,7 @@ SPDX-License-Identifier: MIT
 <div class="feature">
   <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#graph-contains?" id="graph-contains?">graph-contains?</a> <var>graph</var> <var>k</var>)</code><br>
-    <code class="signature">(<a href="#graph-contains?" id="graph-contains?">graph-contains?</a> <var>graph</var> <var>k</var> <var>label</var>)</code>
+    <code class="signature">(<a href="#graph-contains?">graph-contains?</a> <var>graph</var> <var>k</var> <var>label</var>)</code>
 </div>
 <p>Procedure which tests whether <var>graph</var> contains a node inexed at <var>k</var>. The first case returns <code>#t</code> if there is any node at <var>k</var>. The second case returns <code>#t</code> if and only if there is a node at <var>k</var> and that it has label <var>label</var>. Returns <code>#f</code> otherwise. An assertion violation is raised with irritants <var>label</var> and <var>graph</var> if <var>label</var> is not valid with respect to <var>graph</var>&rsquo;s node label comparator. Returns <code>#f</code> otherwise. Examples:</p>
 <pre>
@@ -271,7 +270,7 @@ SPDX-License-Identifier: MIT
 <div class="feature">
   <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#graph-contains-edge?" id="graph-contains-edge?">graph-contains-edge?</a> <var>graph</var> <var>src</var> <var>tgt</var>)</code><br>
-  <code class="signature">(<a href="#graph-contains-edge?" id="graph-contains-edge?">graph-contains-edge?</a> <var>graph</var> <var>src</var> <var>tgt</var> <var>label</var>)</code>
+  <code class="signature">(<a href="#graph-contains-edge?">graph-contains-edge?</a> <var>graph</var> <var>src</var> <var>tgt</var> <var>label</var>)</code>
 </div>
 <p>Procedure which tests whether <var>graph</var> contains an edge incident originating at <var>src</var> and terminating at <var>tgt</var>. The first case returns <code>#t</code> if there is any edge incident. The second case returns <code>#t</code> if and only if there is any edge incident and that it has label <var>label</var>. Returns <code>#f</code> otherwise. An assertion violation is raised with irritants <var>label</var> and <var>graph</var> if <var>label</var> is not valid with respect to <var>graph</var>&rsquo;s edge label comparator. An assertion violation is raised with <var>src</var> or <var>tgt</var> respectively and <var>graph</var> if they are not non-negative integers. Returns <code>#f</code> otherwise. Examples:</p>
 <pre>
@@ -684,7 +683,6 @@ context
 (graph-successors 0) &rarr; (1 2)
 (graph-successors 2) &rarr; (0 2)
 </pre>
-</pre>
 
 <div class="feature">
   <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
@@ -794,7 +792,7 @@ context
 (define (graph-adjacencies g)
   (list-sort
     (lambda (c1 c2)
-      (< (node-context-index c1) (node-context-index c2)))
+      (&lt; (node-context-index c1) (node-context-index c2)))
     (graph-fold
      (lambda (ctxt prev)
        (cons (node-context &apos;()
@@ -830,7 +828,6 @@ context
   <code class="signature">(<a href="#node-context-label" id="node-context-label">node-context-label</a> <var>context</var>)</code><br>
   <code class="signature">(<a href="#node-context-outgoing" id="node-context-outgoing">node-context-outgoing</a> <var>context</var>)</code>
 </div>
-<p></p>
 
 <div class="feature">
   <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
