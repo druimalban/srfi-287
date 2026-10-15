@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+SPDX-FileCopyrightText: 2026 Duncan Guthrie
+SPDX-License-Identifier: MIT
+-->
+<head>
+  <meta charset="utf-8">
+  <title>SRFI XXX: Graphs</title>
+  <link href="/favicon.png" rel="icon" sizes="192x192" type="image/png">
+  <link rel="stylesheet" href="https://srfi.schemers.org/srfi.css" type="text/css">
+  <link rel="stylesheet" href="srfi-275.css" type="text/css">
+  <meta name="viewport" content="width=device-width, initial-scale=1"></head>
+<body>
+  <h1><a href="https://srfi.schemers.org/"><img class="srfi-logo" src="https://srfi.schemers.org/srfi-logo.svg" alt="SRFI surfboard logo"></a>XXX: Graphs</h1>
+  <p class="nonbody">by Duncan Guthrie</p>
+<h2 id="status">Status</h2>
+
+<p>This SRFI is currently in <em>draft</em> status.  Here is <a href="https://srfi.schemers.org/srfi-process.html">an explanation</a> of each status that a SRFI can hold.  To provide input on this SRFI, please send email to <a href="mailto:srfi+minus+XXX+at+srfi+dotschemers+dot+org"><code>srfi-XXX@<span class="antispam">nospam</span>srfi.schemers.org</code></a>.  To subscribe to the list, follow <a href="https://srfi.schemers.org/srfi-list-subscribe.html">these instructions</a>.  You can access previous messages via the mailing list <a href="https://srfi-email.schemers.org/srfi-275/">archive</a>.</p>
+<ul class="nonbody">
+  <li>Received: 2026-10-XX</li>
+  <li>60-day deadline: 2026-12-XX</li>
+</ul>
+
+<h2 id="abstract">Abstract</h2>
+
+<p>This SRFI proposes a programming interface for working with graphs, based on Martin Erwig&rsquo;s functional graph library design. The FGL design takes a rather different view of graphs from most graph presentations, in that the data structures are persistent, which is a good fit for Scheme. The interface is generic to any node and edge label data-type, as long as a SRFI 128 comparator can be specified.</p>
+
+<h2 id="issues">Issues</h2>
+
+<p>none so far</p>
+
+<h2 id="toc">Table of contents</h2>
+<ul>
+  <li><a href="#rationale">Rationale</a></li>
+  <li><a href="#graph-presentation">Graph presentation</a></li>
+  <li><a href="#node-context-0">Node context</a></li>
+  <li><a href="#rnrs-conditions">R6RS conditions</a></li>
+  <li><a href="#argument-restrictions">Argument restrictions and convention</a></li>
+  <li><a href="#notation-and-convention">Notation and convention</a></li>
+  <li><a href="#procedure-index">Index of exported procedures and variables</a></li>
+  <li><a href="#specification">Specification</a>
+    <ul>
+      <li><a href="#predicates">Predicates</a></li>
+      <li><a href="#constructors">Constructors</a></li>
+      <li><a href="#operations">Operations</a></li>
+      <li><a href="#composition">Composition</a></li>
+      <li><a href="#decomposition">Decomposition</a></li>
+      <li><a href="#inspection">Inspection</a></li>
+      <li><a href="#traversal">Traversal</a></li>
+      <li><a href="#context">Node context</a></li>
+    </ul>
+  </li>
+  <li><a href="#implementation">Implementation</a></li>
+  <li><a href="#bibliography">References</a></li>
+  <li><a href="#acknowledgements">Acknowledgements</a></li>
+  <li><a href="#copyright">Copyright</a></li></li>
+</ul>
+
+<h2 id="rationale">Rationale</h2>
+
+<p>Graphs are ubiquitous in programming, but are difficult to implement efficiently. Martin Erwig&rsquo;s functional graph libary design <a href="#erwig2001">[1]</a>, dating from around 2000, has found currency in the Haskell community <a href="#hs-fgl">[2]</a>. Persistent graphs are also included with <code>ocamlgraph</code> <a href="#ocamlgraph">[4]</a>, the original FGL also targets Standard ML, and there is a recent port of FGL to Gleam <a href="#gleam-graph">[5]</a>. Current implementations are mature, are distinguished by a rich set of graph operations, and are supported by availability of appropriate data structures in recent years such as integer mappings. However, there has been no graph proposal so far for Scheme, despite widespread applicability in modern compiler techniques, and for productivity in working with Scheme day-to-day. Graphs are frequently an elegant solution.</p>
+
+<h2 id="persistent-interface">Graph presentation</h2>
+<p>The graphs described here are directed multigraphs. Nodes are indexed by non-negative integers, as in the original FGL/ML design <a href="#sml-fgl">[3]</a>, and in the FGL/Haskell which gives an efficient implementation based on big-endian Patricia trees (precisely the integer mappings in SRFI 224 <a href="#srfi-224">[7]</a>). Representing undirected graphs is possible by adding two edges in opposite directions for every undirected edge.</p>
+<p>In the design presented here, there may be more than one edge from a given source node to a given target node, providing that they are distinguished by label, but there cannot be more than one edge between the same incident nodes with the same label.</p>
+<!-- The FGL/ML design used a version tree <a href="#ahn88">[XXX]</a> presentation, with distinct data structures for membership (a sparse set), node labelling, predecessors and successors. In contrast, the FGL/Haskell has a single integer mapping from nodes to a &lsquo;node context&rsquo;, which holds a vertex label, and predecessor and successor mappings. While the sample implementation was originally based on FGL/ML, it has been refactored to follow FGL/Haskell and uses the integer mappings internally, in which predecessors and successors are a mapping from a source or target node for a given edge, to a set of labels. This means that</p-->
+<p>Apart from <i>indexing</i> nodes by non-negative integers, there is no restriction on the datatypes for node and edge labels, and it is possible for these to be disjoint. When constructing a graph, a comparator for the node labels, and a comparator for the edge labels, are required.</p>
+
+<h2 id="node-context-0">Node context</h2>
+<p>A node context, for some node, is an object which describes incoming edges (to which the node is target), node index, node label, and outgoing edges (from which the node is the source). This is used during graph construction, for extracting the node and any incident edges from a graph, and for mapping and folding over a graph. In the programming interface, incoming edges are represented as pairs of source nodes and edge labels, and outgoing edges are similarly represented as pairs of target nodes and edge labels.</p>
+
+<h2 id="rnrs-conditions">R<sup>6</sup>RS conditions</h2>
+<p>In this SRFI, &ldquo;an error is raised&rdquo; means that an error is signalled, and that the condition has type <code>&amp;error</code> (if R<sup>6</sup>RS conditions are available). Similarly, &ldquo;an assertion violation is raised&rdquo; means that an error is signalled and that the condition has type <code>&amp;assertion</code> (if R<sup>6</sup>RS conditions are available). Furthermore, this should be a compound condition as follows:</p>
+<ul>
+  <li>Raise a <code>&amp;who</code> condition with the procedure name defined in this document</li>
+  <li>Raise an <code>&amp;irritants</code> condition with the irritants in the order described</li>
+</ul>
+<p>R<sup>6</sup>RS conditions may not be available, in which implementations may simply signal an error (in the sense of the R<sup>7</sup>RS) with the described irritants.</p>
+
+<h2 id="argument-restrictions">Argument restrictions and convention</h2>
+
+<p>This specification follows the R<sup>6</sup>RS <a href="https://r6rs.org/final/html/r6rs/r6rs-Z-H-9.html#node_sec_6.2">procedure entries</a> convention. In addition to the naming conventions specifying type restriction for arguments where they are used, we add the following:</p>
+<table class="args">
+  <tr><td><i>graph</i></td><td>graph</td></tr>
+  <tr><td><i>context</i></td><td>node context</td></tr>
+  <tr><td><i>comparator</i></td><td>SRFI 128 comparator <a href="#srfi-128">[6]</td></tr>
+</table>
+
+<h2 id="notation-and-convention">Notation and convention</h2>
+
+<p>The name of the library is simply <code>graph</code>. A single library is exported: <code>(srfi :XXX graph)</code> and the alias <code>(srfi :XXX)</code>, which exports the same procedures.</p>
+
+<h2 id="procedure-index">Index of exported procedures and variables</h2>
+
+<dl class="procs">
+
+  <dt>Constructors</dt>
+  <dd><code><a href="#empty-graph">empty-graph</a></code>
+    <code><a href="#build-graph">build-graph</a></code>
+    <code><a href="#list-%3Egraph">list->graph</a></code></dd>
+
+  <dt>Predicates</dt>
+  <dd><code><a href="#graph?">graph?</a></code>
+    <code><a href="#graph-empty?">graph-empty?</a></code>
+    <code><a href="#graph-contains?">graph-contains?</a></code>
+    <code><a href="#graph-containts-edge?">graph-contains-edge?</a></code></dd>
+
+  <dt>Operations</dt>
+  <dd><code><a href="#graph-order">graph-order</a></code>
+    <code><a href="#graph-size">graph-size</a></code></dd>
+  <dd><code><a href="#graph-node-label-comparator">graph-node-label-comparator</a></code>
+    <code><a href="#graph-edge-label-comparator">graph-edge-label-comparator</a></code></dd>
+  <dd><code><a href="#graph=?">graph=?</a></code></dd>
+
+  <dt>Composition</dt>
+  <dd><code><a href="#graph-embed">graph-embed</a></code>
+    <code><a href="#graph-insert">graph-insert</a></code>
+    <code><a href="#graph-insert-edges">graph-insert-edges</a></code></dd>
+
+  <dt>Decomposition</dt>
+  <dd><code><a href="#graph-match">graph-match</a></code>
+    <code><a href="#graph-match-any">graph-match-any</a></code></dd>
+  <dd><code><a href="#graph-delete">graph-delete</a></code>
+    <code><a href="#graph-delete-edges">graph-delete-edges</a></code>
+    <code><a href="#graph-delete-all-edges">graph-delete-all-edges</a></code></dd>
+
+  <dt>Inspection</dt>
+  <dd><code><a href="#graph-context">graph-context</a></code>
+    <code><a href="#graph-adjacencies">graph-adjacencies</a></code></dd>
+  <dd><code><a href="#graph-nodes">graph-nodes</a></code>
+    <code><a href="#graph-predecessors">graph-predecessors</a></code>
+    <code><a href="#graph-successors">graph-successors</a></code></dd>
+  <dd><code><a href="#graph-nodes+labels">graph-nodes+labels</a></code>
+    <code><a href="#graph-predecessors+labels">graph-predecessors+labels</a></code>
+    <code><a href="#graph-successors+labels">graph-successors+labels</a></code></dd>
+  <dd><code><a href="#graph-indegree">graph-indegree</a></code>
+    <code><a href="#graph-outdegree">graph-outdegree</a></code>
+    <code><a href="#graph-degree">graph-degree</a></code></dd>
+
+  <dt>Traversal</dt>
+  <dd><code><a href="#graph-fold">graph-fold</a></code>
+    <code><a href="#graph-map">graph-map</a></code></dd>
+  <dd><code><a href="#graph-map-nodes">graph-map-nodes</a></code>
+    <code><a href="#graph-map-edges">graph-map-edges</a></code>
+    <code><a href="#graph-map-nodes+edges">graph-map-nodes+edges</a></code></dd>
+  </dd>
+
+<dt>Node context</dt>
+<dd><code><a href="#node-context">node-context</a></code>
+  <code><a href="#node-context?">node-context?</a></code></br>
+<dd><code><a href="#node-context-incoming">node-context-incoming</a></code>
+  <code><a href="#node-context-index">node-context-index</a></code>
+  <code><a href="#node-context-label">node-context-label</a></code>
+  <code><a href="#node-context-outgoing">node-context-outgoing</a></code></dd>
+
+</dl>
+
+<h2 id="specification">Specification</h2>
+
+<h3 id="constructors">Constructors</h3>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#empty-graph" id="empty-graph">empty-graph</a> <var>nlab-comp</var> <var>elab-comp</var>)</code>
+</div>
+<p>Construct the empty graph using comparators for the node and edge labels respectively. An assertion violation is raised with <var>nlab-comp</var> or  <var>elab-comp</var> respectively as irritant if it is not a SRFI 128 comparator. Examples:</p>
+<pre>
+(define default-label-comparator
+  (make-comparator string? string=? string&lt;? string-hash))
+
+(empty-graph default-label-comparator
+             default-label-comparator) &rarr; &lt;graph&gt;
+(empty-graph) &rarr; ERROR
+</pre>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#build-graph" id="build-graph">build-graph</a> <var>nlab-comp</var> <var>elab-comp</var> <var>context</var> ...)</code>
+</div>
+<p>Construct a graph using comparators for the node and edge labels respectively, followed by any number of node contexts. An assertion violation is raised in the following circumstances:
+  <ol>
+    <li>With <var>nlab-comp</var> or <var>elab-comp</var> respectively if they are not a SRFI 128 comparator.</li>
+    <li>With <var>context</var>&rsquo;s node index as irritant if it is not a non-negative integer.</li>
+    <li>With <var>context</var>&rsquo;s node label and node label comparator <var>nlab-comp</var> as irritants if it is not a valid label with respect to <var>nlab-comp</var>.</li>
+    <li>With the incoming and outgoing edges if they are not a proper list.</li>
+    <li>Next, for the incoming and outgoing edges:
+      <ol>
+        <li>With a given element as irritant if it is a non-pair.</li>
+        <li>Assuming that it is a pair, then the LHS (source or target node index) if it is not a non-negative integer, and the LHS and the variadic argument list of contexts <code>context ...</code> if it not contained as index of any node context, as this would imply a directed edge from or to to an invalid node index.</li>
+        <li>Finally, with the RHS (edge label) and edge label comparator <var>elab-comp</var> as irritants if the edge label is not a valid label with respect to <var>elab-comp</var>.</li>
+      </ol>
+  </ol>
+</p>
+<p>Notably, unlike <code>graph-embed</code>, the order of the contexts does not matter, in that incoming and outgoing edge pairs can refer to source or target nodes regardless of the associated context's position within the list of contexts. The other major difference from <code>graph-embed</code> is that in the case of duplicate node contexts (same index), the first context is preferred, and subsequent contexts are ignored.</p>
+<p>In the following example, the same graph is built twice. This graph has nodes indexed at 0, 1 and 2, those nodes labelled &ldquo;zero&rdquo;, &ldquo;one&rdquo;, and &ldquo;two&rdquo;, and then an edge from node 0 to node 1, an edge from node 1 to node 2, and two edges from node 2 back to node 0. In the first case, this is built only by specifying outgoing edges. In the second example, the edge from node 0 to node 1 is added as an incoming edge to node 1, and so too the edge from node 1 to node 2 is added as an incoming edge to node 2.</p>
+<pre>
+(define example1
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;((1 . "edge0.1")))
+    (node-context &apos;() 1 "one"  &apos;((2 . "edge1.2")))
+    (node-context &apos;() 2 "two"  &apos;((0 . "edge2.0") (0 . "edge2.0&apos;")))))
+
+(define example2
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;()                0 "zero" &apos;())
+    (node-context &apos;((0 . "edge0.1")) 1 "one" &apos;())
+    (node-context &apos;((1 . "edge1.2")) 2 "two" &apos;((0 . "edge2.0") (0 . "edge2.0&apos;")))))
+
+(graph=? example1 example2) &rarr; #t
+</pre>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#list-%3Egraph" id="list-%3Egraph">list->graph</a> <var>comparator1</var> <var>comparator2</var> list)</code>
+</div>
+<p>Construct a graph using comparators for the node and edge labels respectively, followed by a list of node contexts. Error-raising behaviour is consistent with <code>build-graph</code>, as if it was applied to <code>list</code>. Example:</p>
+<pre>
+(list->graph default-label-comparator default-label-comparator
+  `(,(node-context &apos;() 0 "zero" &apos;((1 . "edge0.1")))
+    ,(node-context &apos;() 1 "one"  &apos;((2 . "edge1.2")))
+    ,(node-context &apos;() 2 "two"  &apos;((0 . "edge2.0") (0 . "edge2.0&apos;"))))) &rarr; #<graph>
+</pre>
+<h3 id="predicates">Predicates</h3>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#graph?" id="graph?">graph?</a> <var>obj</var>)</code>
+</div>
+<p>Returns <code>#t</code> if <var>obj</var> is a graph object. Returns <code>#f</code> otherwise.</p>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#graph-empty?" id="graph-empty?">graph-empty?</a> <var>graph</var>)</code>
+</div>
+<p>Returns <code>#t</code> if <var>graph</var> is empty (no nodes or edges). Returns <code>#f</code> otherwise. Examples:</p>
+<pre>
+(empty-graph?
+  (empty-graph default-label-comparator default-label-comparator)) &rarr; #t
+(empty-graph?
+  (build-graph default-label-comparator default-label-comparator) &rarr; #t
+(empty-graph?
+  (build-graph default-label-comparator default-label-comparator
+               (node-context &apos;() 0 "zero" &apos;()))) &rarr; #f
+(empty-graph? "abacus") &rarr; ERROR
+</pre>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#graph-contains?" id="graph-contains?">graph-contains?</a> <var>graph</var> <var>k</var>)</code><br>
+    <code class="signature">(<a href="#graph-contains?" id="graph-contains?">graph-contains?</a> <var>graph</var> <var>k</var> <var>label</var>)</code>
+</div>
+<p>Procedure which tests whether <var>graph</var> contains a node inexed at <var>k</var>. The first case returns <code>#t</code> if there is any node at <var>k</var>. The second case returns <code>#t</code> if and only if there is a node at <var>k</var> and that it has label <var>label</var>. Returns <code>#f</code> otherwise. An assertion violation is raised with irritants <var>label</var> and <var>graph</var> if <var>label</var> is not valid with respect to <var>graph</var>&rsquo;s node label comparator. Returns <code>#f</code> otherwise. Examples:</p>
+<pre>
+(define example1
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;((1 . "edge0.1")))
+    (node-context &apos;() 1 "one"  &apos;((2 . "edge1.2")))
+    (node-context &apos;() 2 "two"  &apos;((0 . "edge2.0") (0 . "edge2.0&apos;")))))
+
+(graph-contains? example1 0) &rarr; #t
+(graph-contains? example1 0 "zero") &rarr; #t
+(graph-contains? example1 2 "two") &rarr; #t
+(graph-contains? example1 2 "mynode") &rarr; #f
+
+(graph-contains? example1 0 &apos;zero) &rarr; ERROR ;; wrong label datatype!
+</pre>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#graph-contains-edge?" id="graph-contains-edge?">graph-contains-edge?</a> <var>graph</var> <var>src</var> <var>tgt</var>)</code><br>
+  <code class="signature">(<a href="#graph-contains-edge?" id="graph-contains-edge?">graph-contains-edge?</a> <var>graph</var> <var>src</var> <var>tgt</var> <var>label</var>)</code>
+</div>
+<p>Procedure which tests whether <var>graph</var> contains an edge incident originating at <var>src</var> and terminating at <var>tgt</var>. The first case returns <code>#t</code> if there is any edge incident. The second case returns <code>#t</code> if and only if there is any edge incident and that it has label <var>label</var>. Returns <code>#f</code> otherwise. An assertion violation is raised with irritants <var>label</var> and <var>graph</var> if <var>label</var> is not valid with respect to <var>graph</var>&rsquo;s edge label comparator. An assertion violation is raised with <var>src</var> or <var>tgt</var> respectively and <var>graph</var> if they are not non-negative integers. Returns <code>#f</code> otherwise. Examples:</p>
+<pre>
+(define example1
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;((1 . "edge0.1")))
+    (node-context &apos;() 1 "one"  &apos;((2 . "edge1.2")))
+    (node-context &apos;() 2 "two"  &apos;((0 . "edge2.0") (0 . "edge2.0&apos;")))))
+
+(graph-contains-edge? example1 2 0) &rarr; #t
+(graph-contains-edge? example1 2 0 "edge2.0") &rarr; #t
+(graph-contains-edge? example1 2 0 "edge2.0&apos;") &rarr; #t
+(graph-contains-edge? example1 2 0 "edge2.0&apos;&apos;") &rarr; #f
+
+(graph-contains-edge? example1 2 19) &rarr; #f
+(graph-contains-edge? example1 2 19 "elsewhere") &rarr; #f
+
+
+(graph-contains-edge? example1 1 2 &apos;edge1.2) &rarr; ERROR
+</pre>
+
+<h3 id="operations">Operations</h3>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#graph-order" id="graph-order">graph-order</a> <var>graph</var>)</code><br>
+  <code class="signature">(<a href="#graph-size" id="graph-size">graph-size</a> <var>graph</var>)</code>
+</div>
+<p>Get the respective count of nodes and edges contained in <var>graph</var>. Examples:</p>
+<pre>
+(define example1
+  (empty-graph default-label-comparator default-label-comparator))
+
+(define example2
+  (build-graph default-label-comparator default-label-comparator
+               (node-context &apos;() 0 "zero" &apos;())))
+
+(define example3
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;((1 . "edge0.1")))
+    (node-context &apos;() 1 "one"  &apos;((2 . "edge1.2")))
+    (node-context &apos;() 2 "two"  &apos;((0 . "edge2.0") (0 . "edge2.0&apos;")))))
+
+(graph-order example1) &rarr; 0
+(graph-size example1) &rarr; 0
+
+(graph-order example2) &rarr; 1
+(graph-size example2) &rarr; 0
+
+(graph-order example3) &rarr; 2
+(graph-size example3) &rarr; 4
+</pre>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#graph-node-label-comparator" id="graph-node-label-comparator">graph-node-label-comparator</a> <var>graph</var>)</code><br>
+  <code class="signature">(<a href="#graph-edge-label-comparator" id="graph-edge-label-comparator">graph-edge-label-comparator</a> <var>graph</var>)</code><br>
+</div>
+<p>Retrieve the respective node and edge label comparators for <var>graph</var> as SRFI 128 comparator objects.</p>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#graph=?" id="graph=?">graph=?</a> <var>graph1</var> <var>graph2</var> <var>graph3</var> &hellip;)</code><br>
+</div>
+<p>Returns <code>#t</code> providing that every graph has the same nodes and edges, and that they are indexed and labelled the same. Further, the node label comparators must be the same, and also the edge label comparators. Returns <code>#f</code> otherwise.</p>
+
+<pre>
+(define example1
+  (empty-graph default-label-comparator default-label-comparator))
+
+(define example2
+  (build-graph default-label-comparator default-label-comparator
+               (node-context &apos;() 0 "zero" &apos;())))
+
+(define example3
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;((1 . "edge0.1")))
+    (node-context &apos;() 1 "one"  &apos;((2 . "edge1.2")))
+    (node-context &apos;() 2 "two"  &apos;((0 . "edge2.0") (0 . "edge2.0&apos;")))))
+
+(define example4
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;()                0 "zero" &apos;())
+    (node-context &apos;((0 . "edge0.1")) 1 "one" &apos;())
+    (node-context &apos;((1 . "edge1.2")) 2 "two" &apos;((0 . "edge2.0") (0 . "edge2.0&apos;")))))
+
+(graph=? example1 example1) &rarr; #t
+(graph=? example1 example2) &rarr; #f
+(graph=? example3 example4) &rarr; #t
+(graph=? example1 example2 example3 example4) #f
+
+(define ci-label-comparator
+  (make-comparator string? string-ci=? string-ci&lt;? string-ci-hash))
+
+(define example5
+  (build-graph ci-label-comparator ci-label-comparator
+    (node-context &apos;()                0 "zero" &apos;())
+    (node-context &apos;((0 . "edge0.1")) 1 "one" &apos;())
+    (node-context &apos;((1 . "edge1.2")) 2 "two" &apos;((0 . "edge2.0") (0 . "edge2.0&apos;")))))
+
+(graph=? example5 example3 example4) &rarr; #t
+(graph=? example3 example4 example5) &rarr; #t
+</pre>
+
+<h3 id="composition">Composition</h3>
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#graph-embed" id="graph-embed">graph-embed</a> <var>graph</var> <var>context1</var> <var>context2</var> ...)</code>
+</div>
+<p>Embed node contexts <var>context1</var>, <var>context2</var> and so on into <var>graph</var>. The error-raising behaviour is almost identical to that of <var>build-graph</var> on the level of each contex, except that the irritant raised when an invalid source or target node is declared is <var>graph</var>, and instead of the node or edge label comparators, the irritant is <var>graph</var>, with all of the contexts declared prior to setting the erroneous context.</p>
+<p>That is, <code>graph-embed</code>&rsquo;s behaviour as a variadic procedure can be considered equvialent to repeatedly calling <code>graph-embed</code> with a single argument, rather than how <code>build-graph</code> creates a single graph from a list of contexts. This means that edges declared earlier cannot refer to nodes which have yet to be inserted. However, it can be declared as an incoming edge, providing the source node has already been declared.</p>
+<p>It is not an error to embed a node context corresponding to an existing node, which will be replaced by the new context. Notably, this includes elimination of any incoming or outgoing edges declared previously.</p>
+<p>Basic examples:</p>
+<pre>
+(define c0 (node-context &apos;() 0 "zero" &apos;()))
+(define c1 (node-context &apos;((0 . "edge0.1")) 1 "one" &apos;()))
+(define c2 (node-context &apos;((1 . "edge1.2")) 2 "two" &apos;((0 . "edge2.0") (0 . "edge2.0&apos;"))))
+
+(define ge (empty-graph default-label-comparator default-label-comparator))
+(define g0 (graph-embed ge c0))
+(define g1 (graph-embed g0 c1))
+(define g2a (graph-embed g1 c2))
+
+(define g2b (graph-embed ge c0 c1 c2))
+
+(define g3 (graph-embed g2a (node-context &apos;() 3 "three" &apos;())))
+
+(graph=? g2a g2b) &rarr; #t
+(graph=? g2b g3) &rarr; #f
+</pre>
+<p>In the following example, an edge from node 0 to node 2 has not been declared yet, but it is feasible to add it as an incoming edge to node 2, since node 0 has already been declared:</p>
+<pre>
+(graph-embed ge
+  (node-context &apos;() 0 "zero" &apos;((0 . "identity") (2 . "zero->two")))
+  (node-context &apos;() 0 "two"  &apos;()))
+&rarr; ERROR
+
+(graph-adjacencies
+  (graph-embed ge
+    (node-context &apos;()                  0 "zero" &apos;((0 . "identity")))
+    (node-context &apos;((0 . "zero->two")) 2 "two"  &apos;())
+
+&rarr; ((node-context #f 0 "zero" ((0 . "identity") (2 . "zero->two")))
+   (node-context #f 2 "two"  ())
+</pre>
+<p>Finally, replacing existing node 1:</p>
+<pre>
+(graph-adjacencies
+  (graph-embed
+    ge
+    (node-context &apos;() 0 "zero"   &apos;())
+    (node-context &apos;() 1 "one"    &apos;((0 . "one->zero")))
+    (node-context &apos;() 2 "two"    &apos;())
+    (node-context &apos;() 1 "oneone" &apos;((2 . "one->two")))))
+&rarr; ((node-context #f 0 "zero"   ())
+   (node-context #f 1 "oneone" ((2 . "one->two")))
+   (node-context #f 2 "two"    ())
+</pre>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#graph-insert" id="graph-insert">graph-insert</a> <var>graph</var> <var>k1</var> <var>label1</var> <var>k2</var> <var>label2</var> ...)</code>
+</div>
+<p>Insert nodes with index <var>k1</var> and label <var>label1</var>, and so on into <var>graph</var>. An assertion violation is raised with <var>label1</var> and <var>graph</var> if it is not a valid label with respect to <var>graph</var>&rsquo;s node label comparator, and so on. Examples:</p>
+<pre>
+(define ge (empty-graph default-label-comparator default-label-comparator))
+(graph-nodes (graph-insert ge 0"zero" 1"one" 2"two" 3"three")) &rarr (0 1 2 3)
+(graph-nodes+labels (graph-insert ge 0"zero" 1"one" 2"two" 3"three")) &rarr ((0 . "zero") (1 . "one") (2 . "two") (3 . "three"))
+</pre>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#graph-insert-edges" id="graph-insert-edges">graph-insert-edges</a> <var>graph</var> <var>src1</var> <var>tgt1</var> <var>label1</var> <var>src2</var> <var>tgt2</var> <var>label2</var> ...)</code>
+</div>
+<p>Insert edges from <var>src1</var> to <var>tgt1</var> with label <var>label1</var> and so on into <var>graph</var>. An assertion violation is raised with <var>src1</var>, <var>tgt1</var> and so on respectively as irritant if they are not a non-negative integer. An assertion violation is raised with  <var>src1</var> and <var>graph</var> as irritants if <var>src1</var> is not already contained within <var>graph</var> or is not a valid index for a graph, and similarly with <var>tgt1</var> and <var>graph</var> as irritants if <var>tgt1</var> is not already contained within <var>graph</var> or is not a valid index for a graph. An assertion violation is raised with <var>label1</var> and <var>graph</var> as irritants if <var>label1</var> is invalid given <var>graph</var>&rsquo;s edge label comparator.</p>
+<p>Examples</p>
+<pre>
+(define example1
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;((1 . "edge0.1")))
+    (node-context &apos;() 1 "one"  &apos;((2 . "edge1.2")))
+    (node-context &apos;() 2 "two"  &apos;((0 . "edge2.0") (0 . "edge2.0&apos;")))))
+
+(define template
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;())
+    (node-context &apos;() 1 "one"  &apos;())
+    (node-context &apos;() 2 "two"  &apos;())))
+
+(define example2
+  (graph-insert-edges template
+     0 1 "edge0.1"
+     1 2 "edge1.2"
+     2 0 "edge2.0"
+     2 0 "edge2.0&apos;"))
+
+(graph=? example1 example2) &rarr; #t
+</pre>
+
+<h3 id="decomposition">Decomposition</h3>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#graph-match" id="graph-match">graph-match</a> <var>graph</var> <var>k</var>)</code>
+</div>
+<p>Decompose a graph into two values: a node context (containing the incoming edges, index, label and outgoing edges for node <var>k</var>) and a graph without node <var>k</var> and any edges incident to <var>k</var>. If <var>k</var> is not contained within <var>graph</var>, then an assertion violation is raised with <var>k</var> and <var>graph</var> as irritants. Examples:</p>
+<pre>
+(define example1
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;((1 . "edge0.1")))
+    (node-context &apos;() 1 "one"  &apos;())))
+
+(define example2
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;((1 . "edge0.1")))
+    (node-context &apos;() 1 "one"  &apos;((2 . "edge1.2")))
+    (node-context &apos;() 2 "two"  &apos;((0 . "edge2.0") (0 . "edge2.0&apos;")))))
+
+
+(define-values (context example3) (graph-match example2 2))
+
+context &rarr; (node-context &apos;((2 . "edge1.2")) 2 "two" &apos;((0 . "edge2.0") (0 . "edge2.0&apos;")))
+(graph=? example3 example1) &rarr; #t
+</pre>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#graph-match-any" id="graph-match-any">graph-match-any</a> <var>graph</var>)</code>
+</div>
+<p>Like <code>graph-match</code>, except that an arbitrary node is selected, providing that <var>graph</var> is non-empty. If <var>graph</var> is empty, then an assertion violation is raised with <var>graph</var> as irritant, because there exists no node to be removed.</p>
+<p>In the following example, it is assumed that the first node to be matched will be 2, but this is not guaranteed:</p>
+<pre>
+(define example1
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;((1 . "edge0.1")))
+    (node-context &apos;() 1 "one"  &apos;((2 . "edge1.2")))
+    (node-context &apos;() 2 "two"  &apos;((0 . "edge2.0") (0 . "edge2.0&apos;")))))
+
+(define-values (context example2) (graph-match-any example2))
+context &rarr; (node-context &apos;((2 . "edge1.2")) 2 "two" &apos;((0 . "edge2.0") (0 . "edge2.0&apos;")))
+(graph=? example2 example1) &rarr; #t
+</pre>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#graph-delete" id="graph-delete">graph-delete</a> <var>graph</var> <var>k1</var> <var>k2</var> ...)</code>
+</div>
+<p>Remove the nodes indexed at <var>k1</var>, <var>k2</var> and so on from <var>graph</var>. Similarly to the decompositions above, all edges incident with <var>k1</var>, <var>k2</var> and so on are removed. No error is raised if <var>k1</var> or <var>k2</var> are not contained within <var>graph</var>.</p>
+<pre>
+(define example1
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;())))
+
+(define example2
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;((1 . "edge0.1")))
+    (node-context &apos;() 1 "one"  &apos;((2 . "edge1.2")))
+    (node-context &apos;() 2 "two"  &apos;((0 . "edge2.0") (0 . "edge2.0&apos;")))))
+
+(graph=? example1 (graph-delete example2 1 2)) &rarr; #t
+</pre>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#graph-delete-edges" id="graph-delete-edges">graph-delete-edges</a> <var>graph</var> <var>src1</var> <var>tgt1</var> <var>label1</var> <var>src2</var> <var>tgt2</var> <var>label2</var> ...)</code>
+</div>
+<p>Remove the edges from <var>src1</var> to <var>tgt1</var> with label <var>label1</var>, and so on. An assertion violation is raised with <var>src1</var> or <var>tgt1</var> respectively as irritant if they are not a non-negative integer. An assertion violation is raised with <var>label1</var> and <var>graph</var> as irritants if <var>label1</var> is invalid given <var>graph</var>&rsquo;s edge label comparator. No error is raised if <var>src1</var> or <var>tgt1</var> and so on are not contained within <var>graph</var>.</p>
+<p>Examples:</p>
+<pre>
+(define example1
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;((1 . "edge0.1")))
+    (node-context &apos;() 1 "one"  &apos;())
+    (node-context &apos;() 2 "two"  &apos;((0 . "edge2.0")))))
+
+(define example2
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;((1 . "edge0.1")))
+    (node-context &apos;() 1 "one"  &apos;((2 . "edge1.2")))
+    (node-context &apos;() 2 "two"  &apos;((0 . "edge2.0") (0 . "edge2.0&apos;")))))
+
+(define example3
+  (graph-delete-edges example2
+                      1 2 "edge1.2"
+                      2 0 "edge2.0&apos;"))
+
+(graph=? example1 example3) &rarr; #t
+</pre>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#graph-delete-all-edges" id="graph-delete-all-edges">graph-delete-all-edges</a> <var>graph</var> <var>src1</var> <var>tgt1</var> <var>src2</var> <var>tgt2</var> ...)</code>
+</div>
+<p>Remove all of the edges from <var>src1</var> to <var>tgt1</var>, and so on. This removes all edges regardless of label. An assertion violation is raised with <var>src1</var> or <var>tgt1</var> respectively as irritant if they are not a non-negative integer. No error is raised if <var>src1</var> or <var>tgt1</var> and so on are not contained within <var>graph</var>. Examples</p>
+<pre>
+(define example1
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;((1 . "edge0.1")))
+    (node-context &apos;() 1 "one"  &apos;())
+    (node-context &apos;() 2 "two"  &apos;())))
+
+(define example2
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;((1 . "edge0.1")))
+    (node-context &apos;() 1 "one"  &apos;((2 . "edge1.2")))
+    (node-context &apos;() 2 "two"  &apos;((0 . "edge2.0") (0 . "edge2.0&apos;")))))
+
+(define example3
+  (graph-delete-all-edges example2
+                          1 2
+                          2 0))
+
+(graph=? example1 example3) &rarr; #t
+</pre>
+<h3 id="inspection">Inspection</h3>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#graph-context" id="graph-context">graph-context</a> <var>graph</var> <var>k</var>)</code>
+</div>
+<p>Like <code>graph-match</code>, except that only a node context is retrieved, which is faster as there is no need to decompose the graph into one in which <var>k</var> and any edges are not present. Error behaviour is identical to <var>graph-match</var>. Examples:</p>
+<pre>
+(define example1
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;((1 . "edge0.1")))
+    (node-context &apos;() 1 "one"  &apos;((2 . "edge1.2")))
+    (node-context &apos;() 2 "two"  &apos;((0 . "edge2.0") (0 . "edge2.0&apos;")))))
+
+(graph-context example1 0)
+&rarr; (node-context ((2 . "edge2.0&apos;") (2 . "edge2.0")) 0 "zero" ((1 . "edge0.1")))
+(graph-context example1 2)
+&rarr; (node-context  ((1 . "edge1.2")) 2 "two" ((0 . "edge2.0&apos;") (0 . "edge2.0")))
+</pre>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#graph-adjacencies" id="graph-adjacencies">graph-adjacencies</a> <var>graph</var>)</code>
+</div>
+<p>Get a list of adjacencies, which is a list of node contexts consisting only of index, label and outgoing edges (incoming edges are <code>#f</code>). Examples:</p>
+<pre>
+(define example1
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;((1 . "edge0.1")))
+    (node-context &apos;() 1 "one"  &apos;((2 . "edge1.2")))
+    (node-context &apos;() 2 "two"  &apos;((0 . "edge2.0") (0 . "edge2.0&apos;")))))
+
+(graph-adjacencies example1)
+&rarr; ((node-context #f 0 "zero" ((1 . "edge0.1")))
+   (node-context #f 1 "one" ((2 . "edge1.2")))
+   (node-context #f 2 "two" ((0 . "edge2.0&apos;") (0 . "edge2.0"))))
+</pre>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#graph-nodes" id="graph-nodes">graph-nodes</a> <var>graph</var>)</code>
+</div>
+<p>Get a list of node indices contained within <var>graph</var>. Examples:</p>
+<pre>
+(define example1
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;((1 . "edge0.1")))
+    (node-context &apos;() 1 "one"  &apos;((20 . "edge1.20")))
+    (node-context &apos;() 20 "twenty"  &apos;((0 . "edge2.0") (0 . "edge2.0&apos;")))))
+
+(graph-nodes example1) &rarr; (0 1 20)
+</pre>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#graph-predecessors" id="graph-predecessors">graph-predecessors</a> <var>graph</var> <var>k</var>)</code>
+</div>
+<p>Get the predecessors of node <var>k</var>, as a list of source node indices.  If <var>k</var> is not contained within <var>graph</var>, then an assertion violation is raised with <var>k</var> and <var>graph</var> as irritants. Examples:</p>
+<pre>
+(define example1
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;((1 . "edge0.1") (2 . "edge0.2")))
+    (node-context &apos;() 1 "one"  &apos;((2 . "edge1.2")))
+    (node-context &apos;() 2 "two"  &apos;((0 . "edge2.0") (0 . "edge2.0&apos;") (2 . "identity")))))
+
+(graph-predecessors 0) &rarr; (2)
+(graph-predecessors 2) &rarr; (0 1 2)
+</pre>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#graph-successors" id="graph-successors">graph-successors</a> <var>graph</var> <var>k</var>)</code>
+</div>
+<p>Get the successors of node <var>k</var> as a list of target node indices.  If <var>k</var> is not contained within <var>graph</var>, then an assertion violation is raised with <var>k</var> and <var>graph</var> as irritants. Examples:</p>
+<pre>
+(define example1
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;((1 . "edge0.1") (2 . "edge0.2")))
+    (node-context &apos;() 1 "one"  &apos;((2 . "edge1.2")))
+    (node-context &apos;() 2 "two"  &apos;((0 . "edge2.0") (0 . "edge2.0&apos;") (2 . "identity")))))
+
+(graph-successors 0) &rarr; (1 2)
+(graph-successors 2) &rarr; (0 2)
+</pre>
+</pre>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#graph-nodes+labels" id="graph-nodes+labels">graph-nodes+labels</a> <var>graph</var>)</code>
+</div>
+<p>Retrieve the nodes and labels contained within <var>graph</var> as an association list. Examples:</p>
+<pre>
+(define example1
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;((1 . "edge0.1")))
+    (node-context &apos;() 1 "one"  &apos;((20 . "edge1.20")))
+    (node-context &apos;() 20 "twenty"  &apos;((0 . "edge2.0") (0 . "edge2.0&apos;")))))
+
+(graph-nodes+labels example1) &rarr; ((0 . "zero") (1 . "one") (20 . "twenty"))
+</pre>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#graph-predecessors+labels" id="graph-predecessors+labels">graph-predecessors+labels</a> <var>graph</var> <var>k</var>)</code>
+</div>
+<p>Get the predecessors of node <var>k</var> as a list of pairs of source node and edge labels.  If <var>k</var> is not contained within <var>graph</var>, then an assertion violation is raised with <var>k</var> and <var>graph</var> as irritants. Examples:</p>
+<pre>
+(define example1
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;((1 . "edge0.1") (2 . "edge0.2")))
+    (node-context &apos;() 1 "one"  &apos;((2 . "edge1.2")))
+    (node-context &apos;() 2 "two"  &apos;((0 . "edge2.0") (0 . "edge2.0&apos;") (2 . "identity")))))
+
+(graph-predecessors+labels 0) &rarr; ((2 . "edge2.0&apos;") (2 . "edge2.0"))
+(graph-predecessors+labels 2) &rarr; ((0 . "edge0.2") (1 . "edge1.2") (2 . "identity"))
+</pre>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#graph-successors+labels" id="graph-successors+labels">graph-successors+labels</a> <var>graph</var> <var>k</var>)</code>
+</div>
+<p>Get the successors of node <var>k</var> as a list of pairs of target node and edge labels.  If <var>k</var> is not contained within <var>graph</var>, then an assertion violation is raised with <var>k</var> and <var>graph</var> as irritants. Examples:</p>
+<pre>
+(define example1
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;((1 . "edge0.1") (2 . "edge0.2")))
+    (node-context &apos;() 1 "one"  &apos;((2 . "edge1.2")))
+    (node-context &apos;() 2 "two"  &apos;((0 . "edge2.0") (0 . "edge2.0&apos;") (2 . "identity")))))
+
+(graph-successors+labels 0) &rarr; ((1 . "edge0.1") (2 . "edge0.2"))
+(graph-successors+labels 2) &rarr; ((0 . "edge2.0&apos;") (0 . "edge2.0") (2 . "identity"))
+</pre>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#graph-indegree" id="graph-indegree">graph-indegree</a> <var>graph</var> <var>k</var>)</code>
+</div>
+<p>Get the indegree of node <var>k</var>, which is a numeric count of the incoming edges. If <var>k</var> is not contained within <var>graph</var>, then an assertion violation is raised with <var>k</var> and <var>graph</var> as irritants. Examples:</p>
+<pre>
+(define example1
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;((2 . "edge0.2")))
+    (node-context &apos;() 1 "one"  &apos;((2 . "edge1.2")))
+    (node-context &apos;() 2 "two"  &apos;((0 . "edge2.0") (0 . "edge2.0&apos;") (2 . "identity")))))
+
+(graph-indegree example1 0) &rarr; 2  ; two edges from node 2
+(graph-indegree example1 1) &rarr; 0
+(graph-indegree example1 2) &rarr; 3  ; also a loop labelled "identity"
+</pre>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#graph-outdegree" id="graph-outdegree">graph-outdegree</a> <var>graph</var> <var>k</var>)</code>
+</div>
+<p>Get the outdegree of node <var>k</var>, which is a numeric count of the outgoing edges. If <var>k</var> is not contained within <var>graph</var>, then an assertion violation is raised with <var>k</var> and <var>graph</var> as irritants. Examples:</p>
+<pre>
+(define example1
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;((2 . "edge0.2")))
+    (node-context &apos;() 1 "one"  &apos;((2 . "edge1.2")))
+    (node-context &apos;() 2 "two"  &apos;((0 . "edge2.0") (0 . "edge2.0&apos;") (2 . "identity")))))
+
+(graph-outdegree example1 0) &rarr; 1
+(graph-outdegree example2 0) &rarr; 1
+(graph-outdegree example3 0) &rarr; 3
+</pre>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#graph-degree" id="graph-degree">graph-degree</a> <var>graph</var> <var>k</var>)</code>
+</div>
+<p>Get the degree of node <var>k</var>, which is a numeric count of both incoming and outgoing edges. If <var>k</var> is not contained within <var>graph</var>, then an assertion violation is raised with <var>k</var> and <var>graph</var> as irritants. Examples:</p>
+<pre>
+(define example1
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;((2 . "edge0.2")))
+    (node-context &apos;() 1 "one"  &apos;((2 . "edge1.2")))
+    (node-context &apos;() 2 "two"  &apos;((0 . "edge2.0") (0 . "edge2.0&apos;") (2 . "identity")))))
+
+(graph-degree example1 0) &rarr; 3
+(graph-degree example2 0) &rarr; 1
+(graph-degree example3 0) &rarr; 6
+</pre>
+
+<h3 id="traversal">Traversal</h3>
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#graph-fold" id="graph-fold">graph-fold</a> <var>procedure</var> <var>obj</var> <var>graph</var></code>
+</div>
+<p>Fold over <var>graph</var>, in an unspecified order. <var>procedure?</var> is applied to two arguments: the current node context, and the accumulator, which begins as <var>obj</var>. In the following example, <code>graph-adjacencies</code> can be defined as follows:</p>
+<pre>
+(define (graph-adjacencies g)
+  (list-sort
+    (lambda (c1 c2)
+      (< (node-context-index c1) (node-context-index c2)))
+    (graph-fold
+     (lambda (ctxt prev)
+       (cons (node-context #f
+                           (node-context-index ctxt)
+                           (node-context-label ctxt)
+                           (node-context-outgoing ctxt))
+             prev))
+     &apos;()
+     g)))
+
+(define example1
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;((2 . "edge0.2")))
+    (node-context &apos;() 1 "one"  &apos;((2 . "edge1.2")))
+    (node-context &apos;() 2 "two"  &apos;((0 . "edge2.0") (0 . "edge2.0&apos;") (2 . "identity")))))
+
+(graph-adjacencies example1)
+&rarr; ((node-context #f 0 "zero" ((2 . "edge0.2")))
+   (node-context #f 1 "one" ((2 . "edge1.2")))
+   (node-context #f 2 "two" ((0 . "edge2.0&apos;") (0 . "edge2.0") (2 . "identity"))))
+</pre>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#graph-map" id="graph-map">graph-map</a> <var>procedure</var> <var>graph</var></code>
+</div>
+<p>Call <var>procedure</var> on every node context in <var>graph</var>, and produce a new graph. This procedure is structure preserving in that it is guaranteed to produce a graph with the same number of nodes as <var>graph</var>. While <var>procedure</var> works on a node context, the vertex index field will be ignored as it is not meaningful outside of construction of a graph and e.g. can given as <code>#f</code>. Error behaviour behaviour is almost identical to <code>build-graph</code> except as follows. First, instead of a list of contexts, and similarly to <code>graph-embed</code>, the graph up to adding the erroneous context is raised as irritant. Second, an <i>error</i> is raised if <var>procedure</var> produced a non-context, with <var>procedure</var> and the elicited non-context as irritant.</p>
+<p>Similarly to <code>graph-embed</code>, any previous incoming and outgoing edges to a given node which are not in the resulting context are discarded.</p>
+<p>In the following example, the only outgoing edges are loops on nodes 0 and 1. A procedure is mapped over these which increments the target node, so that these loops now point to the node indexed afterwards. The incoming edges to <i>embed</i> in the current node context are set to the empty list.</p>
+<pre>
+(define example1
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;((0 . "identity")))
+    (node-context &apos;() 1 "one"  &apos;((1 . "identity")))
+    (node-context &apos;() 2 "two"  &apos;())))
+
+(graph-adjacencies example1)
+&rarr; ((node-context #f 0 "zero" ((0 . "identity")))
+        (node-context #f 1 "one" ((1 . "identity")))
+        (node-context #f 2 "two" ()))
+
+(define (pair+1 src tgt)
+  (let ([tgt (fx+ tgt 1)])
+    (cons tgt
+          (string-append "edge" (number->string src)
+                         "."    (number->string tgt)))))
+
+(define (proc1 ctxt)
+  (let ([outgoing
+         (map
+          (lambda (pair)
+            (pair+1 (node-context-index ctxt) (car pair)))
+          (node-context-outgoing ctxt))])
+    (node-context &apos;()
+                  (node-context-index ctxt)
+                  (node-context-label ctxt)
+                  outgoing)))
+
+(graph-adjacencies (graph-map proc1 example1))
+&rarr; ((node-context #f 0 "zero" ((1 . "edge0.1")))
+   (node-context #f 1 "one"  ((2 . "edge1.2")))
+   (node-context #f 2 "two"  ()))
+</pre>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#graph-map-nodes" id="graph-map-nodes">graph-map-nodes</a> <var>procedure</var> <var>graph</var></code>
+</div>
+<p>Call <var>procedure</var> on the label of every node label in <var>graph</var>, and produce a new graph. An error is raised with irritants <var>procedure</var>, input label, output and <var>graph</var> if the output was invalid given <var>graph</var>&rsquo;s node label comparator. Examples:</p>
+<pre>
+(define example1
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;((0 . "identity")))
+    (node-context &apos;() 1 "one"  &apos;((1 . "identity")))
+    (node-context &apos;() 2 "two"  &apos;())))
+
+(graph-adjacencies (graph-map-nodes string-upcase example1))
+&rarr; ((node-context #f 0 "ZERO" ((0 . "identity")))
+   (node-context #f 1 "ONE" ((1 . "identity")))
+   (node-context #f 2 "TWO" ()))
+</pre>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#graph-map-edges" id="graph-map-edges">graph-map-edges</a> <var>procedure</var> <var>graph</var></code>
+</div>
+<p>Call <var>procedure</var> on the label of every edge label in <var>graph</var>, and produce a new graph. An error is raised with irritants <var>procedure</var>, input label, output and <var>graph</var> if the output was invalid given <var>graph</var>&rsquo;s edge label comparator. Examples:</p>
+<pre>
+(define example1
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;((0 . "identity")))
+    (node-context &apos;() 1 "one"  &apos;((1 . "identity")))
+    (node-context &apos;() 2 "two"  &apos;())))
+
+(graph-adjacencies (graph-map-edges string-upcase example1))
+&rarr; ((node-context #f 0 "zero" ((0 . "IDENTITY")))
+   (node-context #f 1 "one"  ((1 . "IDENTITY")))
+   (node-context #f 2 "two"  ()))
+</pre>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#graph-map-nodes+edges" id="graph-map-nodes+edges">graph-map-nodes+edges</a> <var>nproc</var> <var>eproc</var> <var>graph</var></code>
+</div>
+<p>Call <var>nproc</var> on the label of every node label in <var>graph</var>, and <var>eproc</var> on the label of every edge label in <var>graph</var>, and produce a new graph. An assertion violation is raised with <var>nproc</var> or <var>eproc</var> respectively as irritant if they are not a procedure. An error is raised with irritants <var>nproc</var>, input label, output and <var>graph</var> if the output was invalid given <var>graph</var>&rsquo;s node label comparator. An error is raised with irritants <var>eproc</var>, input label, output and <var>graph</var> if the output was invalid given <var>graph</var>&rsquo;s edge label comparator.</p>
+<pre>
+(define example1
+  (build-graph default-label-comparator default-label-comparator
+    (node-context &apos;() 0 "zero" &apos;((0 . "identity")))
+    (node-context &apos;() 1 "one"  &apos;((1 . "identity")))
+    (node-context &apos;() 2 "two"  &apos;())))
+
+(graph-adjacencies (graph-map-nodes+edges string-upcase example1))
+&rarr; ((node-context #f 0 "ZERO" ((0 . "IDENTITY")))
+   (node-context #f 1 "ONE"  ((1 . "IDENTITY")))
+   (node-context #f 2 "TWO"  ()))
+</pre>
+
+<h3 id="context">Node context</h3>
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#node-context?" id="node-context?">node-context?</a> <var>obj</var>)</code>
+</div>
+<p>Returns <code>#t</code> if <var>obj</var> is a node context. Returns <code>#f</code> otherwise.</p>
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#node-context-incoming" id="node-context-incoming">node-context-incoming</a> <var>context</var>)</code><br>
+  <code class="signature">(<a href="#node-context-index" id="node-context-index">node-context-index</a> <var>context</var>)</code><br>
+  <code class="signature">(<a href="#node-context-label" id="node-context-label">node-context-label</a> <var>context</var>)</code><br>
+  <code class="signature">(<a href="#node-context-outgoing" id="node-context-outgoing">node-context-outgoing</a> <var>context</var>)</code>
+</div>
+<p></p>
+
+<div class="feature">
+  <span class="category"><code>(srfi :XXX graph)</code><br>procedure</span>
+  <code class="signature">(<a href="#node-context" id="node-context">node-context</a> <var>incoming</var> <var>k</var> <var>label</var> <var>outgoing</var>)</code>
+</div>
+<p>Construct a node context from incoming edges <var>incoming</var>, index <var>k</var>, label <var>label</var> and outgoing edges <var>outgoing</var>. No validation in this low-level constructor is made as there is no way to check that the node or edge labels are invalid in isolation. Instead, the graph constructors and procedures make these checks with respect to their comparators.</p>
+
+
+
+<h2 id="implementation">Implementation</h2>
+
+<p><a href="https://codeberg.org/dguthrie/scheme-fgl">The sample implementation</a> targets Chez Scheme and is written in (mostly) portable R<sup>6</sup>RS. It imports various SRFIs from the <a href="https://github.com/arcfide/chez-srfi">Chez-SRFI</a> grab-bag. At the time of writing, the only external dependency is the sample implementation of the draft SRFI 262 pattern matcher <a href="#srfi-262">[8]</a>.</p>
+<p>A full <i>property</i> test suite is supported. This means that SRFI 158, SRFI 194 and SRFI 252 are a dependency, which may not be widespread in many Scheme implementations.</p>
+
+<h2 id="bibliography">References</h2>
+
+<ul id="references">
+  <li><a href="#erwig2001" id="erwig2001">[1]</a>&ensp;Martin Erwig, 2001.<br>&ensp;&ensp;&ensp;&ensp;<a href="https://doi.org/10.1017/S0956796801004075">&lsquo;Inductive graphs and functional graph algorithms&rsquo;</a><br>&ensp;&ensp;&ensp;&ensp;Journal of Functional Programming, Vol. 11, Issue 5</li>
+  <li><a href="#hs-fgl" id="hs-fgl">[2]</a>&ensp;Martin Erwig, Ivan Lazar Miljenovic, 2001.<br>&ensp;&ensp;&ensp;&ensp;<a href="https://github.com/haskell/fgl"><code>fgl</code>: Martin Erwig&rsquo;s Functional Graph Library</a></li>
+  <li><a href="#sml-fgl" id="sml-fgl">[3]</a>&ensp;Martin Erwig, October 31, 1997.<br>&ensp;&ensp;&ensp;&ensp;<a href="https://web.engr.oregonstate.edu/~erwig/fgl/ml/">FGL/ML - A Functional Graph Library for ML</a></li>
+  <li><a href="#ocamlgraph" id="ocamlgraph">[4]</a>&ensp;Sylvain Conchon, Jean-Christophe Filliâtre, Julien Signoles, n/d.<br>&ensp;&ensp;&ensp;&ensp;<a href="https://github.com/backtracking/ocamlgraph/">A generic graph library for OCaml</a></li>
+  <li><a href="#gleam-graph" id="gleam-graph">[5]</a>&ensp; Giacomo Cavalieri, n/d.<br>&ensp;&ensp;&ensp;&ensp;<a href="https://github.com/giacomocavalieri/graph">A package for working with graphs in Gleam</a></li>
+
+<li><a href="#srfi-128" id="srfi-128">[6]</a>&ensp;John Cowan, 2016.<br>&ensp;&ensp;&ensp;&ensp;<a href="https://srfi.schemers.org/srfi-128/">SRFI 128: Comparators (reduced)</a></li>
+<li><a href="#srfi-224" id="srfi-224">[7]</a>&ensp;Wolfgang Corcoran-Mathe, 2021.<br>&ensp;&ensp;&ensp;&ensp;<a href="https://srfi.schemers.org/srfi-224/">SRFI 224: Integer Mappings</a></li>
+<li><a href="#srfi-262" id="srfi-262">[8]</a>&ensp;Daphne Preston-Kendal, 2025 (draft).<br>&ensp;&ensp;&ensp;&ensp;<a href="https://srfi.schemers.org/srfi-262/">SRFI 262: Extensible pattern-matcher</a></li>
+<li><a href="#r6rs" id="r6rs">[9]</a>&ensp;Michael Sperber, R. Kent Dybvig, Matthew Flatt, Anton van Straaten, 2009.<br>&ensp;&ensp;&ensp;&ensp;<i>Revised [6] Report on the Algorithmic Language Scheme</i> (<a href="https://r6rs.org/final/html/r6rs/r6rs.html">online</a>)<br>&ensp;&ensp;&ensp;&ensp;Cambridge University Press, ISBN: <code>978-0-521-19399-3</code></li>
+</ul>
+
+<h2 id="acknowledgements">Acknowledgements</h2>
+
+<h2 id="copyright">Copyright</h2>
+<p class="nonbody">© 2026 Duncan Guthrie.</p>
+
+<p class="nonbody">
+  Permission is hereby granted, free of charge, to any person
+  obtaining a copy of this software and associated documentation files
+  (the "Software"), to deal in the Software without restriction,
+  including without limitation the rights to use, copy, modify, merge,
+  publish, distribute, sublicense, and/or sell copies of the Software,
+  and to permit persons to whom the Software is furnished to do so,
+  subject to the following conditions:</p>
+
+<p class="nonbody">
+  The above copyright notice and this permission notice (including the
+  next paragraph) shall be included in all copies or substantial
+  portions of the Software.</p>
+
+<p class="nonbody">
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+  NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+  BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+  ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.</p>
+
+<hr>
+<address>Editor: <a href="mailto:srfi-editors+at+srfi+dot+schemers+dot+org">Arthur A. Gleckler</a></address></body></html>
