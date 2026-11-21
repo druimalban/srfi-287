@@ -904,13 +904,13 @@ context
   <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#make-source-violation" id="make-source-violation">make-source-violation</var>)</code><br>
   <code class="signature">(<a href="#source-violation?" id="source-violation?">source-violation?</a> <var>obj</var>)</code></div>
-<p>A source condition object consists of no fields and is intended to be used in compound conditions to indicate errors in the source part of edge insertions, or erroneous lists of incoming edges in node contexts. The <code>source-violation?</code> procedure returns <code>#t</code> if <var>obj</var> is an <code>&amp;source</code> label condition object, <code>#f</code> otherwise.</p>
+<p>A source condition object consists of no fields and is intended to be used in compound conditions to indicate errors in the source part of edge insertions, or erroneous lists of incoming edges in node contexts. The <code>source-violation?</code> procedure returns <code>#t</code> if <var>obj</var> is an <code>&amp;source</code> condition object, <code>#f</code> otherwise.</p>
 
 <div class="feature">
   <span class="category"><code>(srfi :287 graph)</code><br>procedure</span>
   <code class="signature">(<a href="#make-target-violation" id="make-target-violation">make-target-violation</var>)</code><br>
   <code class="signature">(<a href="#target-violation?" id="target-violation?">target-violation?</a> <var>obj</var>)</code></div>
-<p>A target condition object consists of no fields and is intended to be used in compound conditions to indicate errors in the target part of edge insertions, or erroneous lists of outgoing edges in node contexts. The <code>target-violation?</code> procedure returns <code>#t</code> if <var>obj</var> is an <code>&amp;target</code> label condition object, <code>#f</code> otherwise.</p>
+<p>A target condition object consists of no fields and is intended to be used in compound conditions to indicate errors in the target part of edge insertions, or erroneous lists of outgoing edges in node contexts. The <code>target-violation?</code> procedure returns <code>#t</code> if <var>obj</var> is an <code>&amp;target</code> condition object, <code>#f</code> otherwise.</p>
 
 <h2 id="implementation">Implementation</h2>
 
